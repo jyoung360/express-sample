@@ -1,5 +1,8 @@
 var http = require('http');
 var running = false;
+var startTime = undefined;
+var endTime;
+var aborted = false;
 
 var stats = {}
 
@@ -7,42 +10,41 @@ var trafficData = [
 	{
 		"tpm" : 100,
 		"urlOrder" : "random",
-		"duration" : 60,
+		"duration" : 5,
 		"urls" : [
-			"http://www.cnn.com",
-			"http://www.yahoo.com",
-			"http://www.google.com"
+			"http://www.cnn.com"
 		]
 	},
 	{
 		"tpm" : 200,
 		"urlOrder" : "random",
-		"duration" : 60,
+		"duration" : 5,
 		"urls" : [
-			"http://www.cnn.com",
-			"http://www.yahoo.com",
-			"http://www.google.com"
+			"http://www.yahoo.com"
 		]
 	},
 	{
 		"tpm" : 300,
 		"urlOrder" : "random",
-		"duration" : 60,
+		"duration" : 5,
 		"urls" : [
-			"http://www.cnn.com",
-			"http://www.yahoo.com",
 			"http://www.google.com"
 		]
 	}
 ];
 
 function initiateSet(dataSet,url) {
-	console.log(running);
 	var node = dataSet();
 	if(node) {
+		url = randomUrl(node.urls);
 		doStuff(url,(60/node.tpm)*1000,0,node.tpm*node.duration/60,function(){
 			initiateSet(dataSet);
 		});
+	}
+	else {
+		console.log('all done')
+		running=false;
+		endTime = new Date();
 	}
 }
 
@@ -94,13 +96,26 @@ exports.start = function(req, res){
 	var urlGenerator = randomUrl(trafficData[0].urls)
 	var dataSet = getDataSet(trafficData);
 
-	initiateSet(dataSet,urlGenerator);
+	initiateSet(dataSet);
+	startTime = new Date();
   	res.send("starting");
 };
 
 exports.stop = function(req, res){
 	running = false;
+	endTime = new Date();
+	aborted = true;
   	res.send("%j",stats);
 };
 
-// graphite, rickshaw, and siren
+exports.status = function(req, res) {
+	var response = {
+		"complete" : !running,
+		"data" : stats,
+		"startTime" : startTime,
+		"endTime" : endTime,
+		"aborted" : aborted
+	}
+	console.log(response);
+	res.json(response);
+}
