@@ -12,12 +12,12 @@ function initiateSet(dataSet,url) {
 	var node = dataSet();
 	if(node) {
 		url = randomUrl(node.urls);
-		doStuff(url,(60/node.tpm)*1000,0,node.tpm*node.duration/60,function(){
+		processDataSet(url,(60/node.tpm)*1000,0,node.tpm*node.duration/60,function(){
 			initiateSet(dataSet);
 		});
 	}
 	else {
-		console.log('all done')
+		console.log('Completed all tests.')
 		running=false;
 		endTime = new Date();
 	}
@@ -34,35 +34,40 @@ function randomUrl(urls) {
 	return function () { return urls[Math.floor(Math.random()*urls.length)]; }
 }
 
-function doStuff(url,timeout,count,limit,callback) {
+function processDataSet(url,timeout,count,limit,callback) {
 	if(!running) { return; }
 	var testUrl = url();
-	console.log("testing %j %j %j",testUrl,count,running);
-	pollServer(testUrl);
+	runTest(testUrl);
 
 	if(count < limit) {
-		setTimeout(function() { doStuff(url,timeout,count+1,limit,callback); },timeout);
+		setTimeout(function() { processDataSet(url,timeout,count+1,limit,callback); },timeout);
 	}
 	else {
 		return callback();
 	}
 }
-//setTimeout(pollServer, 1000);
 
-function pollServer(url) {
+function runTest(url) {
 	var data = '';
 
 	http.get(url, function(res) {
+		var start = new Date();
 		res.setEncoding('utf8');
+		
 		res.on('data', function (chunk) {
 			data += chunk;
 		});
 		res.on('end', function(e) {
-			stats[url] = stats[url]?stats[url]+1:1;
-			console.log('all done %j',data.length);
+			var end = new Date();
+			var duration = end-start;
+			console.log("Received response from server after %j ms with status code %j",duration,res.statusCode);
+			var existingStats = stats[url] || { "statusCodes" : [], "responseTimes" : [] };
+			existingStats.statusCodes.push(res.statusCode);
+			existingStats.responseTimes.push(duration);
+			stats[url] = existingStats;
 		});
 	}).on('error', function(e) {
-		console.log('problem with request: ' + e.message);
+		console.log("Received error from server w/ message: %j",e.message);
 	});
 }
 
@@ -113,6 +118,5 @@ exports.status = function(req, res) {
 		"endTime" : endTime,
 		"aborted" : aborted
 	}
-	console.log(response);
 	res.json(response);
 }
