@@ -1,0 +1,26 @@
+[
+	{
+		"tpm" : 100,
+		"urlOrder" : "random",
+		"duration" : 5,
+		"urls" : [
+			"http://www.cnn.com"
+		]
+	},
+	{
+		"tpm" : 200,
+		"urlOrder" : "random",
+		"duration" : 5,
+		"urls" : [
+			"http://www.yahoo.com"
+		]
+	},
+	{
+		"tpm" : 300,
+		"urlOrder" : "random",
+		"duration" : 5,
+		"urls" : [
+			"http://www.google.com"
+		]
+	}
+]

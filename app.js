@@ -33,7 +33,7 @@ if ('development' == app.get('env')) {
 }
 
 app.get('/', routes.index);
-app.get('/load/start', load.start);
+app.post('/load/start', load.start);
 app.get('/load/end', load.stop);
 app.get('/load/status', load.status);
 

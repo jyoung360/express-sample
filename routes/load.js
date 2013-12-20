@@ -6,32 +6,7 @@ var aborted = false;
 
 var stats = {}
 
-var trafficData = [
-	{
-		"tpm" : 100,
-		"urlOrder" : "random",
-		"duration" : 5,
-		"urls" : [
-			"http://www.cnn.com"
-		]
-	},
-	{
-		"tpm" : 200,
-		"urlOrder" : "random",
-		"duration" : 5,
-		"urls" : [
-			"http://www.yahoo.com"
-		]
-	},
-	{
-		"tpm" : 300,
-		"urlOrder" : "random",
-		"duration" : 5,
-		"urls" : [
-			"http://www.google.com"
-		]
-	}
-];
+var trafficData = [];
 
 function initiateSet(dataSet,url) {
 	var node = dataSet();
@@ -91,7 +66,29 @@ function pollServer(url) {
 	});
 }
 
+function inspectJson(json) {
+	var response = {
+		"success" : false,
+		"message" : "N/A"
+	};
+	try {
+		trafficData = JSON.parse(json);
+		response.success = true;
+	}catch(Exception) {
+		console.log(Exception.message);
+		response.message = Exception.message;
+	}
+	return response;
+}
+
 exports.start = function(req, res){
+	var status = inspectJson(req.body.json);
+	if(status.success !== true) {
+		console.log(status);
+		res.send(status.message);
+		return;
+	}
+
 	running = true;
 	var urlGenerator = randomUrl(trafficData[0].urls)
 	var dataSet = getDataSet(trafficData);
